@@ -1,7 +1,7 @@
 import localforage from 'localforage'
 
 
-const FS_CID_LOG = "fission_sdk.fs_cid_log"
+const FS_CID_LOG = "webnative.fs_cid_log"
 
 
 // QUERYING

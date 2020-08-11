@@ -25,10 +25,10 @@ The Fission SDK offers tools for:
 
 ```ts
 // ES6
-import * as sdk from 'webnative'
+import * as wn from 'webnative'
 
 // Browser/UMD build
-self.webnative
+const wn = self.webnative
 ```
 
 See [`docs/`](docs/) for more detailed documentation based on the source code.
@@ -38,13 +38,26 @@ See [`docs/`](docs/) for more detailed documentation based on the source code.
 # Getting Started
 
 ```ts
-const { scenario, state } = await sdk.initialise()
+const { prerequisites, scenario, state } = await wn.initialise({
+  // Will ask the user permission to store
+  // your apps data in `private/Apps/Nullsoft/Winamp`
+  app: {
+    name: "Winamp",
+    creator: "Nullsoft"
+  },
+
+  // Ask the user permission for additional filesystem paths
+  fs: {
+    privatePaths: [ "Music" ],
+    publicPaths: [ "Mixtapes" ]
+  }
+})
 
 if (scenario.authCancelled) {
   // User was redirected to lobby,
   // but cancelled the authorisation.
 
-} else if (scenario.authSucceeded || scenario.continuum) {
+} else if (scenario.authSucceeded || scenario.continuation) {
   // State:
   // state.authenticated    -  Will always be `true` in these scenarios
   // state.newUser          -  If the user is new to Fission
@@ -54,19 +67,32 @@ if (scenario.authCancelled) {
   // ☞ We can now interact with our file system (more on that later)
   state.fs
 
-} else if (scenario.notAuthenticated) {
-  sdk.redirectToLobby()
+} else if (scenario.notAuthorised) {
+  wn.redirectToLobby(prerequisites)
 
 }
 ```
 
-`redirectToLobby` will redirect you to [auth.fission.codes](https://auth.fission.codes) our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser. The function takes an optional parameter, the url that the lobby should redirect back to (the default is `location.href`).
+`redirectToLobby` will redirect you to [auth.fission.codes](https://auth.fission.codes) our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser. The function takes a second, optional, parameter, the url that the lobby should redirect back to (the default is `location.href`).
 
 
-## Other functions
+## Authorisation
 
-- `await sdk.deauthenticate()`
-- `await sdk.authenticatedUsername()`
+The auth lobby is responsible for authorisation as well, it'll give us multiple UCANs (or tokens if you will) based on the values we gave to `wn.initialise`. Important to note here is that if one of those tokens, that we got from a previous session, is expired, the scenario will be `notAuthorised`.
+
+
+## Shared devices
+
+Our vision for "fission-enabled apps" is that users don't really need to sign out, unless they are on a shared device (a device they normally don't use). You can read more about our vision on this on [our forum](https://talk.fission.codes/t/what-does-log-in-or-log-out-mean-for-the-fission-sdk-and-apps/919).
+
+Signing out on shared devices would be two-fold:
+1. Remove any authorisation tokens from the current domain (ie. for your app)
+2. Sign out of the auth lobby
+
+This function will do that first part, and then redirect you to the auth lobby:
+```javascript
+wn.leave()
+```
 
 
 
@@ -77,17 +103,24 @@ The Web Native File System (WNFS) is built on top of IPFS. It's structured and f
 Each file system has a public tree and a private tree. All information (links, data, metadata, etc) in the private tree is encrypted. Decryption keys are stored in such a manner that access to a given folder grants access to all of its subfolders.
 
 ```ts
-// After authenticating …
+// After initialising …
 const fs = state.fs
+const appPath = fs.appPath()
 
 // List the user's private files that belong to this app
-const appPath = fs.appPath.private("myApp")
-
 if (await fs.exists(appPath)) {
   await fs.ls(appPath)
+
+// The user is new to the app, lets create the app-data directory.
 } else {
   await fs.mkdir(appPath)
+  await fs.publicise()
+
 }
+
+// Create a sub directory
+await fs.mkdir(fs.appPath([ "Sub Directory" ]))
+await fs.publicise()
 ```
 
 
@@ -102,7 +135,30 @@ WNFS exposes a familiar POSIX-style interface:
 - `mv`: move a file or directory
 - `read`: alias for `cat`
 - `rm`: remove a file or directory
-- `write`: write to a file
+- `write`: alias for `add`
+
+
+## Publicise
+
+The `publicise` function synchronises your file system with the Fission API and IPFS. We don't do this automatically because if you add a large set of data, you only want to do this after everything is added. Otherwise it would be too slow and we would have too many network requests to the API.
+
+
+## Permissions
+
+Every file system action checks if you received the sufficient permissions from the user. Permissions are given to the app by the auth lobby. The permissions to ask the user are determined by the "prerequisites" you give to `wn.initialise`, such as `app`.
+
+The initialise function will indicate the `notAuthorised` scenario if one of the necessary tokens will expire in one day, to minimise the likelihood of receiving this error message. But to be safe, you should account for this error:
+
+```ts
+try {
+  await fs.mkdir(...)
+} catch (err) {
+  if (err instanceOf wn.errors.NoPermissionError) {
+    // Redirect the user back to the auth page to get the permissions
+    wn.redirectToLobby(prerequisites)
+  }
+}
+```
 
 
 ## API
@@ -277,11 +333,20 @@ Yes, this only requires a slightly different setup.
 
 ```ts
 // UI thread
-// `session.fs` will now be `null`
-sdk.initialise({ loadFileSystem: false })
+// `state.fs` will now be `null`
+const { prerequisites } = wn.initialise({ loadFileSystem: false })
+worker.postMessage({ tag: "LOAD_FS", prerequisites })
 
 // Web Worker
-const fs = await sdk.loadFileSystem()
+let fs
+
+self.onMessage = async event => {
+  switch (event.data.tag) {
+    case "LOAD_FS":
+      fs = await wn.loadFileSystem(event.data.prerequisites)
+      break;
+  }
+}
 ```
 
 
@@ -303,7 +368,7 @@ Run these before anything else you do with the SDK.
 ```js
 // custom api, lobby, and/or user domain
 // (no need to specify each one)
-sdk.setup.endpoints({
+wn.setup.endpoints({
   api: "https://my.fission.api",
   lobby: "https://my.fission.lobby",
   user: "my.domain"
@@ -311,14 +376,15 @@ sdk.setup.endpoints({
 
 // js-ipfs options
 // (see docs in src for more info)
-sdk.setup.ipfs({ init: { repo: "my-ipfs-repo" } })
+wn.setup.ipfs({ init: { repo: "my-ipfs-repo" } })
 ```
 
 
 
 # Apps API
 
-The sdk also exposes methods to interact with the apps associated with the user. This API must be prefixed with `apps`
+Webnative also exposes methods to interact with the apps associated with the user. This API must be prefixed with `apps`.
+
 - `apps.index`: A list of all of your apps and their associated domain names
 - `apps.create`: Creates a new app, assigns an initial subdomain, and sets an asset placeholder
 - `apps.deleteByURL`: Destroy app by any associated URL
@@ -336,7 +402,7 @@ Returns: `{ RandomKey : [ subdomain ] }` a map of subdomains
 
 Example:
 ```ts
-const index = await sdk.apps.index()
+const index = await wn.apps.index()
 // { `SqlBackendKey {unSqlBackendKey = 216} `: ['your-fission-deployment.fission.app'] }
 ```
 
@@ -353,7 +419,7 @@ Returns: `subdomain` the newly created subdomain
 
 Example:
 ```ts
-const newApp = await sdk.apps.create()
+const newApp = await wn.apps.create()
 // 'your-fission-deployment.fission.app'
 ```
 
@@ -370,7 +436,7 @@ Returns:
 
 Example:
 ```ts
-const deletedApp = await sdk.apps.deleteByURL('your-fission-deployment.fission.app')
+const deletedApp = await wn.apps.deleteByURL('your-fission-deployment.fission.app')
 //
 ```
 

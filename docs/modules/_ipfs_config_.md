@@ -22,9 +22,9 @@
 
 ### `Const` JS_IPFS
 
-• **JS_IPFS**: *"https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.48.0/index.min.js"* = "https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.48.0/index.min.js"
+• **JS_IPFS**: *"https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.49.1/index.min.js"* = "https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.49.1/index.min.js"
 
-*Defined in [src/ipfs/config.ts:12](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/ipfs/config.ts#L12)*
+*Defined in [src/ipfs/config.ts:12](https://github.com/fission-suite/webnative/blob/74901c2/src/ipfs/config.ts#L12)*
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 • **PEER_WSS**: *"/dns4/node.fission.systems/tcp/4003/wss/ipfs/QmVLEz2SxoNiFnuyLpbXsH6SvjPTrHNMU88vCQZyhgBzgw"* = "/dns4/node.fission.systems/tcp/4003/wss/ipfs/QmVLEz2SxoNiFnuyLpbXsH6SvjPTrHNMU88vCQZyhgBzgw"
 
-*Defined in [src/ipfs/config.ts:13](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/ipfs/config.ts#L13)*
+*Defined in [src/ipfs/config.ts:13](https://github.com/fission-suite/webnative/blob/74901c2/src/ipfs/config.ts#L13)*
 
 ## Functions
 
@@ -40,7 +40,7 @@ ___
 
 ▸ **get**(): *Promise‹IPFS›*
 
-*Defined in [src/ipfs/config.ts:29](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/ipfs/config.ts#L29)*
+*Defined in [src/ipfs/config.ts:32](https://github.com/fission-suite/webnative/blob/74901c2/src/ipfs/config.ts#L32)*
 
 **Returns:** *Promise‹IPFS›*
 
@@ -50,7 +50,7 @@ ___
 
 ▸ **set**(`userIpfs`: unknown): *void*
 
-*Defined in [src/ipfs/config.ts:25](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/ipfs/config.ts#L25)*
+*Defined in [src/ipfs/config.ts:28](https://github.com/fission-suite/webnative/blob/74901c2/src/ipfs/config.ts#L28)*
 
 **Parameters:**
 
@@ -66,10 +66,14 @@ Name | Type |
 
 ### ▪ **defaultOptions**: *object*
 
-*Defined in [src/ipfs/config.ts:19](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/ipfs/config.ts#L19)*
+*Defined in [src/ipfs/config.ts:19](https://github.com/fission-suite/webnative/blob/74901c2/src/ipfs/config.ts#L19)*
 
 ▪ **config**: *object*
 
-*Defined in [src/ipfs/config.ts:20](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/ipfs/config.ts#L20)*
+*Defined in [src/ipfs/config.ts:20](https://github.com/fission-suite/webnative/blob/74901c2/src/ipfs/config.ts#L20)*
 
 * **Bootstrap**: *string[]* = [ PEER_WSS ]
+
+* **Addresses**: *object*
+
+  * **Delegates**: *string[]* = [ PEER_WSS ]
