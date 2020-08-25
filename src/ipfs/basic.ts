@@ -6,7 +6,7 @@ import { DAG_NODE_DATA } from './constants'
 
 export const add = async (content: FileContent): Promise<AddResult> => {
   const ipfs = await getIpfs()
-  const result = await ipfs.add(content)
+  const result = await ipfs.add(content, { cidVersion: 1 })
 
   return {
     cid: result.cid.toString(),
@@ -51,8 +51,10 @@ export const dagGet = async (cid: CID): Promise<DAGNode> => {
 export const dagPut = async (node: DAGNode): Promise<AddResult> => {
   const ipfs = await getIpfs()
   // using this format so that we get v0 CIDs. ipfs gateway seems to have issues w/ v1 CIDs
-  const cidObj = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
+  // const cidObj = await ipfs.dag.put(node, { format: 'dag-cbor', hashAlg: 'sha2-256' })
+  const cidObj = await ipfs.dag.put(node)
   const cid = cidObj.toString()
+  console.log(cid)
   const nodeSize = await size(cid)
   return { cid, size: nodeSize }
 }

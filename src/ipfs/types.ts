@@ -6,6 +6,8 @@ export type IPFS = {
   object: ObjectAPI
   swarm: SwarmAPI
   dns(domain: string): Promise<CID>
+  files: any
+  block: any
 }
 
 export type DAGNode = {
@@ -40,7 +42,7 @@ export type RawDAGLink = {
 }
 
 export interface DagAPI {
-  put(dagNode: unknown, options: unknown): Promise<CIDObj>
+  put(dagNode: unknown, options?: unknown): Promise<CIDObj>
   get(cid: string | CID, path?: string, options?: unknown): Promise<RawDAGNode>
   tree(cid: string | CID, path?: string, options?: unknown): Promise<unknown>
 }
