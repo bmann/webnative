@@ -6,8 +6,6 @@ export type IPFS = {
   object: ObjectAPI
   swarm: SwarmAPI
   dns(domain: string): Promise<CID>
-  files: any
-  block: any
 }
 
 export type DAGNode = {
