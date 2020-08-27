@@ -35,10 +35,12 @@ export const cat = async (cid: CID): Promise<string> => {
 
 export const ls = async (cid: CID): Promise<UnixFSFile[]> => {
   const ipfs = await getIpfs()
+  console.log("bfore")
   const links = []
   for await (const link of ipfs.ls(cid)) {
     links.push(link)
   }
+  console.log("after")
   return links
 }
 
@@ -52,6 +54,8 @@ export const dagPut = async (node: DAGNode): Promise<AddResult> => {
   const ipfs = await getIpfs()
   // using this format so that we get v0 CIDs. ipfs gateway seems to have issues w/ v1 CIDs
   // const cidObj = await ipfs.dag.put(node, { format: 'dag-cbor', hashAlg: 'sha2-256' })
+  // right now we're putting dag-pb formatted objects with dag-cbor.
+  console.log(node)
   const cidObj = await ipfs.dag.put(node)
   const cid = cidObj.toString()
   console.log(cid)
@@ -66,6 +70,8 @@ export const dagPutLinks = async (links: DAGLink[]): Promise<AddResult> => {
 
 export const size = async (cid: CID): Promise<number> => {
   const ipfs = await getIpfs()
+  const node = await dagGet(cid)
+  console.log(node)
   const stat = await ipfs.object.stat(cid)
   return stat.CumulativeSize
 } 
