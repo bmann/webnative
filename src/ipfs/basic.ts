@@ -1,5 +1,4 @@
 import dagPB from 'ipld-dag-pb'
-import CIDTool from 'cid-tool'
 import { get as getIpfs, PEER_WSS } from './config'
 import { CID, FileContent, DAGNode, UnixFSFile, DAGLink, AddResult } from './types'
 import util from './util'
@@ -54,7 +53,7 @@ export const dagPut = async (node: DAGNode): Promise<AddResult> => {
   // using this format because Gateway doesn't like `dag-cbor` nodes. 
   // I think this is because UnixFS requires `dag-pb` & the gateway requires UnixFS for directory traversal
   const cidObj = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
-  const cid = CIDTool.base32(cidObj.toString())
+  const cid = cidObj.toV1().toString()
   const nodeSize = await size(cid)
   return { cid, size: nodeSize }
 }

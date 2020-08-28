@@ -61,6 +61,8 @@ export type CIDObj = {
   multibaseName: MultibaseName
   string: CID
   version: number
+  toV1(): CIDObj
+  toString(): string
 }
 
 export type FileContent = Record<string, unknown> | Buffer | Blob | string | number | boolean
